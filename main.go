@@ -15,11 +15,11 @@ import (
 	cbor "github.com/ipfs/go-ipld-cbor"
 	"github.com/pborman/options"
 
+	"github.com/minio/sha256-simd"
+
 	"hash"
 	"math/bits"
 	"sync"
-
-	sha256simd "github.com/minio/sha256-simd"
 
 	"golang.org/x/xerrors"
 )
@@ -57,14 +57,17 @@ const MaxPiecePayload = MaxPieceSize / 128 * 127
 const MinPiecePayload = uint64(65)
 
 const (
-	commpDigestSize = sha256simd.Size
+	commpDigestSize = sha256.Size
 	quadPayload     = 127
-	bufferSize      = 256 * quadPayload // FIXME: tune better, chosen by rough experiment
+	bufferSize      = 512 * quadPayload // FIXME: tune better, chosen by rough experiment
 )
 
 var (
-	layerQueueDepth   = 32 // FIXME: tune better, chosen by rough experiment
-	shaPool           = sync.Pool{New: func() interface{} { return sha256simd.New() }}
+	layerQueueDepth = 64 // FIXME: tune better, chosen by rough experiment
+	shaPool         = sync.Pool{New: func() interface{} {
+		server := sha256.NewAvx512Server()
+		return sha256.NewAvx512(server)
+	}}
 	stackedNulPadding [MaxLayers][]byte
 )
 
