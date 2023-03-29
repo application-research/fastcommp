@@ -639,6 +639,8 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println("carHeader.Version: ", carHeader.Version)
+
 	if carHeader.Version == 1 || carHeader.Version == 2 {
 		streamLen, blockCount, err = process(streamBuf, streamLen)
 		if err != nil {
