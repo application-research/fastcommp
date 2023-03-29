@@ -59,11 +59,11 @@ const MinPiecePayload = uint64(65)
 const (
 	commpDigestSize = sha256.Size
 	quadPayload     = 127
-	bufferSize      = 512 * quadPayload // FIXME: tune better, chosen by rough experiment
+	bufferSize      = 256 * quadPayload // FIXME: tune better, chosen by rough experiment
 )
 
 var (
-	layerQueueDepth = 64 // FIXME: tune better, chosen by rough experiment
+	layerQueueDepth = 8 // FIXME: tune better, chosen by rough experiment
 	shaPool         = sync.Pool{New: func() interface{} {
 		server := sha256.NewAvx512Server()
 		return sha256.NewAvx512(server)
