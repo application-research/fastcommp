@@ -1,5 +1,8 @@
 build:
-	go build main.go -o testcommp
+	go build -o testcommp
 
 run:
 	go run main.go
+
+clean:
+	rm ./testcommp
