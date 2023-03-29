@@ -19,8 +19,7 @@ import (
 	"math/bits"
 	"sync"
 
-	//sha256simd "github.com/minio/sha256-simd"
-	sha256simd "crypto/sha256"
+	sha256simd "github.com/minio/sha256-simd"
 
 	"golang.org/x/xerrors"
 )
@@ -636,19 +635,15 @@ func main() {
 	carHeader := new(CarV1Header)
 	err = cbor.DecodeInto(headerBuffer, carHeader)
 	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("carHeader.Version: ", carHeader.Version)
-
-	if carHeader.Version == 1 || carHeader.Version == 2 {
+		//panic(err)
+		carHdr = nil
+	} else if carHeader.Version == 1 || carHeader.Version == 2 {
+		fmt.Println("carHeader.Version: ", carHeader.Version)
 		streamLen, blockCount, err = process(streamBuf, streamLen)
 		if err != nil {
 			log.Fatal(err)
 			panic(err)
 		}
-	} else {
-		panic(err)
 	}
 
 	/*
