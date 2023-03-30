@@ -527,7 +527,6 @@ func checkCarV2(file io.ReadSeekCloser) (bool, *CarV2Header) {
 		carV2Header.IndexOffset = binary.LittleEndian.Uint64(header[32:40])
 		return true, carV2Header
 	} else {
-		fmt.Println("File header does not match expected header")
 		return false, nil
 	}
 }
@@ -609,82 +608,82 @@ func main() {
 	var carHdr *CarV1Header
 
 	// Read the first 10 bytes of the file into a byte slice
-	headerLengthBytes, err := streamBuf.Peek(10)
-	if err != nil {
-		panic(err)
-	}
-	// Read the header length
-	headerLength, headerBytesRead := binary.Uvarint(headerLengthBytes)
-	if headerLength == 0 || headerBytesRead < 0 {
-		panic(err)
-	}
-	// Read the header
-	actualViLen, err := io.CopyN(io.Discard, streamBuf, int64(headerBytesRead))
-	if err != nil {
-		panic(err)
-	}
-	streamLen += actualViLen
-	headerBuffer := make([]byte, headerLength)
-	actualHdrLen, err := io.ReadFull(streamBuf, headerBuffer)
-	if err != nil {
-		panic(err)
-	}
-	streamLen += int64(actualHdrLen)
-
-	// Decode the header
-	carHeader := new(CarV1Header)
-	err = cbor.DecodeInto(headerBuffer, carHeader)
-	if err != nil {
-		//panic(err)
-		carHdr = nil
-	} else if carHeader.Version == 1 || carHeader.Version == 2 {
-		fmt.Println("carHeader.Version: ", carHeader.Version)
-		streamLen, blockCount, err = process(streamBuf, streamLen)
+	/*
+		headerLengthBytes, err := streamBuf.Peek(10)
 		if err != nil {
-			log.Fatal(err)
 			panic(err)
 		}
-	}
+		// Read the header length
+		headerLength, headerBytesRead := binary.Uvarint(headerLengthBytes)
+		if headerLength == 0 || headerBytesRead < 0 {
+			panic(err)
+		}
+		// Read the header
+		actualViLen, err := io.CopyN(io.Discard, streamBuf, int64(headerBytesRead))
+		if err != nil {
+			panic(err)
+		}
+		streamLen += actualViLen
+		headerBuffer := make([]byte, headerLength)
+		actualHdrLen, err := io.ReadFull(streamBuf, headerBuffer)
+		if err != nil {
+			panic(err)
+		}
+		streamLen += int64(actualHdrLen)
 
-	/*
-		if maybeHeaderLen, err := streamBuf.Peek(10); err == nil {
-			if hdrLen, viLen := binary.Uvarint(maybeHeaderLen); viLen > 0 && hdrLen > 0 {
-				actualViLen, err := io.CopyN(io.Discard, streamBuf, int64(viLen))
-				streamLen += actualViLen
+		// Decode the header
+		carHeader := new(CarV1Header)
+		err = cbor.DecodeInto(headerBuffer, carHeader)
+		if err != nil {
+			//panic(err)
+			carHdr = nil
+		} else if carHeader.Version == 1 || carHeader.Version == 2 {
+			fmt.Println("carHeader.Version: ", carHeader.Version)
+			streamLen, blockCount, err = process(streamBuf, streamLen)
+			if err != nil {
+				log.Fatal(err)
+				panic(err)
+			}
+		}
+	*/
+
+	if maybeHeaderLen, err := streamBuf.Peek(10); err == nil {
+		if hdrLen, viLen := binary.Uvarint(maybeHeaderLen); viLen > 0 && hdrLen > 0 {
+			actualViLen, err := io.CopyN(io.Discard, streamBuf, int64(viLen))
+			streamLen += actualViLen
+			if err == nil {
+				hdrBuf := make([]byte, hdrLen)
+				actualHdrLen, err := io.ReadFull(streamBuf, hdrBuf)
+				streamLen += int64(actualHdrLen)
 				if err == nil {
-					hdrBuf := make([]byte, hdrLen)
-					actualHdrLen, err := io.ReadFull(streamBuf, hdrBuf)
-					streamLen += int64(actualHdrLen)
-					if err == nil {
-						carHdr = new(CarV1Header)
-						if cbor.DecodeInto(hdrBuf, carHdr) != nil {
-							// if it fails - it fails
-							carHdr = nil
-						} else if carHdr.Version == 1 {
-							streamLen, blockCount, err = process(streamBuf, streamLen)
-							if err != nil {
-								log.Fatal(err)
-								brokenCar = true
-							}
-						} else if carHdr.Version == 2 {
-							fmt.Println("car v2")
-							// readV1ContentFromV2Carfile(streamBuf)
-							//streamBuf.Discard(PragmaSize + HeaderSize)
-
-							streamLen, blockCount, err = process(streamBuf, streamLen)
-							if err != nil {
-								log.Fatal(err)
-								brokenCar = true
-							}
-						} else {
-							// if it fails - it fails
-							carHdr = nil
+					carHdr = new(CarV1Header)
+					if cbor.DecodeInto(hdrBuf, carHdr) != nil {
+						// if it fails - it fails
+						carHdr = nil
+					} else if carHdr.Version == 1 {
+						streamLen, blockCount, err = process(streamBuf, streamLen)
+						if err != nil {
+							log.Fatal(err)
+							brokenCar = true
 						}
+					} else if carHdr.Version == 2 {
+						fmt.Println("car v2")
+						// readV1ContentFromV2Carfile(streamBuf)
+						//streamBuf.Discard(PragmaSize + HeaderSize)
+
+						streamLen, blockCount, err = process(streamBuf, streamLen)
+						if err != nil {
+							log.Fatal(err)
+							brokenCar = true
+						}
+					} else {
+						// if it fails - it fails
+						carHdr = nil
 					}
 				}
 			}
 		}
-	*/
+	}
 
 	// read out remainder into the hasher, if any
 	n, err := io.Copy(io.Discard, streamBuf)
