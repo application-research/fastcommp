@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/bits"
@@ -171,21 +172,34 @@ func main() {
 		return
 	}
 	fileName := os.Args[1]
+
+	start := time.Now()
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
 
+	elapsed := time.Since(start)
+	fmt.Printf("Elapsed file read time: %s\n", elapsed)
+
 	cc := new(DataCidWriter)
-	start := time.Now()
+	start = time.Now()
 	cc.Write(data)
 	sum, err := cc.Sum()
 	if err != nil {
 		panic(err)
 	}
 
-	elapsed := time.Since(start)
+	elapsed = time.Since(start)
+	fmt.Printf("Elapsed commP time: %s\n", elapsed)
 	fmt.Printf("commP: %s\n", sum.PieceCID.String())
-	fmt.Printf("Elapsed time: %s\n", elapsed)
+
+	// Convert the sum results to a JSON string
+	results, err := json.MarshalIndent(sum, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(results))
+
 }
