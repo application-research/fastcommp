@@ -1,6 +1,6 @@
-# testcommp
+# fastcommp
 
-Filecoin commP testing tool.
+Filecoin fast piece commitment summation tool.
 
 # build
 
@@ -10,7 +10,7 @@ Filecoin commP testing tool.
 
 `./testcommp <carfile.car>`
 
-# optional: create car dummy data
+## optional: create car dummy data
 
 1. create an 8 GiB test file
 
