@@ -8,7 +8,7 @@ Filecoin fast piece commitment summation tool.
 
 # execute
 
-`./testcommp <carfile.car>`
+`./fastcommp <carfile.car>`
 
 ## optional: create car dummy data
 
