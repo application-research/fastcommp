@@ -8,13 +8,8 @@ Filecoin fast piece commitment summation tool.
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"time"
-
-	"github.com/application-research/fastcommp"
+    "fmt"
+    "github.com/application-research/fastcommp"
 )
 
 func main() {
