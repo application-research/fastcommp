@@ -1,13 +1,8 @@
-package main
+package fastcommp
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"math/bits"
-	"os"
 	"runtime"
-	"time"
 
 	"github.com/filecoin-project/go-commp-utils/nonffi"
 	commcid "github.com/filecoin-project/go-fil-commcid"
@@ -170,43 +165,4 @@ func (w *DataCidWriter) Sum() (DataCIDSize, error) {
 		PieceSize:   abi.PaddedPieceSize(len(leaves)) * commPBufPad,
 		PieceCID:    p,
 	}, nil
-}
-
-func main() {
-	// Get the file name from the command-line arguments
-	if len(os.Args) != 2 {
-		fmt.Printf("Usage: %s <filename>\n", os.Args[0])
-		return
-	}
-	fileName := os.Args[1]
-
-	start := time.Now()
-	data, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
-	}
-
-	elapsed := time.Since(start)
-	fmt.Printf("Elapsed file read time: %s\n", elapsed)
-
-	cc := new(DataCidWriter)
-	start = time.Now()
-	cc.Write(data)
-	sum, err := cc.Sum()
-	if err != nil {
-		panic(err)
-	}
-
-	elapsed = time.Since(start)
-	fmt.Printf("Elapsed commP time: %s\n", elapsed)
-	fmt.Printf("commP: %s\n", sum.PieceCID.String())
-
-	// Convert the sum results to a JSON string
-	results, err := json.MarshalIndent(sum, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(results))
-
 }

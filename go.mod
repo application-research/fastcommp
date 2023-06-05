@@ -1,4 +1,4 @@
-module github.com/jlogelin/testcommp
+module github.com/application-research/fastcommp
 
 go 1.18
 
