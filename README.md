@@ -2,6 +2,18 @@
 
 Filecoin fast piece commitment summation tool.
 
+# usage
+
+```go
+    fast := new(fastcommp.CommpWriter)
+	fast.Write(data)
+	sum, err := fast.Sum()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("commP: %s\n", sum.PieceCID.String())
+```
+
 # build
 
 `make build`

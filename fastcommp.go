@@ -27,7 +27,7 @@ type DataCIDSize struct {
 const commPBufPad = abi.PaddedPieceSize(8 << 20)
 
 // CommPBuf is the size of the buffer used to calculate commP
-const CommPBuf = abi.UnpaddedPieceSize(commPBufPad - (commPBufPad / 128)) // can't use .Unpadded() for const
+const CommPBuf = abi.UnpaddedPieceSize(commPBufPad - (commPBufPad / 128))
 
 // ciderr is a cid and an error
 type ciderr struct {
@@ -35,8 +35,8 @@ type ciderr struct {
 	err error
 }
 
-// DataCidWriter is a writer that calculates the CommP
-type DataCidWriter struct {
+// CommpWriter is a writer that calculates the CommP
+type CommpWriter struct {
 	len    int64
 	buf    [CommPBuf]byte
 	leaves []chan ciderr
@@ -46,7 +46,7 @@ type DataCidWriter struct {
 }
 
 // Write writes data to the DataCidWriter
-func (w *DataCidWriter) Write(p []byte) (int, error) {
+func (w *CommpWriter) Write(p []byte) (int, error) {
 	if w.throttle == nil {
 		w.throttle = make(chan int, runtime.NumCPU())
 	}
@@ -57,6 +57,7 @@ func (w *DataCidWriter) Write(p []byte) (int, error) {
 		w.tbufs = make([][CommPBuf]byte, cap(w.throttle))
 	}
 
+	// process last non-zero leaf if exists and we have data to write
 	n := len(p)
 	for len(p) > 0 {
 		buffered := int(w.len % int64(len(w.buf)))
@@ -69,16 +70,19 @@ func (w *DataCidWriter) Write(p []byte) (int, error) {
 		p = p[copied:]
 		w.len += int64(copied)
 
+		// if we filled the buffer, process it
 		if copied > 0 && w.len%int64(len(w.buf)) == 0 {
 			leaf := make(chan ciderr, 1)
 			bufIdx := <-w.throttle
 			copy(w.tbufs[bufIdx][:], w.buf[:])
 
+			// process leaf in a goroutine
 			go func() {
 				defer func() {
 					w.throttle <- bufIdx
 				}()
 
+				// calculate commP for this leaf and send it to the channel
 				cc := new(commp.Calc)
 				_, _ = cc.Write(w.tbufs[bufIdx][:])
 				p, _, _ := cc.Digest()
@@ -89,17 +93,19 @@ func (w *DataCidWriter) Write(p []byte) (int, error) {
 				}
 			}()
 
+			// add leaf to list
 			w.leaves = append(w.leaves, leaf)
 		}
 	}
 	return n, nil
 }
 
-func (w *DataCidWriter) Sum() (DataCIDSize, error) {
+func (w *CommpWriter) Sum() (DataCIDSize, error) {
 	// process last non-zero leaf if exists
 	lastLen := w.len % int64(len(w.buf))
 	rawLen := w.len
 
+	// wait for all leaves to finish
 	leaves := make([]cid.Cid, len(w.leaves))
 	for i, leaf := range w.leaves {
 		r := <-leaf
