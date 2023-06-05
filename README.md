@@ -5,13 +5,27 @@ Filecoin fast piece commitment summation tool.
 # usage
 
 ```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"time"
+
+	"github.com/application-research/fastcommp"
+)
+
+func main() {
     fast := new(fastcommp.CommpWriter)
-	fast.Write(data)
-	sum, err := fast.Sum()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("commP: %s\n", sum.PieceCID.String())
+    fast.Write(data)
+    sum, err := fast.Sum()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Printf("commP: %s\n", sum.PieceCID.String())
+}
 ```
 
 # build
