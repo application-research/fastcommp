@@ -21,20 +21,26 @@ import (
 	"github.com/filecoin-project/go-commp-utils/zerocomm"
 )
 
+// DataCIDSize is the result of a DataCID calculation
 type DataCIDSize struct {
 	PayloadSize int64
 	PieceSize   abi.PaddedPieceSize
 	PieceCID    cid.Cid
 }
 
+// commPBufPad is the size of the buffer used to calculate commP
 const commPBufPad = abi.PaddedPieceSize(8 << 20)
+
+// CommPBuf is the size of the buffer used to calculate commP
 const CommPBuf = abi.UnpaddedPieceSize(commPBufPad - (commPBufPad / 128)) // can't use .Unpadded() for const
 
+// ciderr is a cid and an error
 type ciderr struct {
 	c   cid.Cid
 	err error
 }
 
+// DataCidWriter is a writer that calculates the CommP
 type DataCidWriter struct {
 	len    int64
 	buf    [CommPBuf]byte
@@ -44,10 +50,10 @@ type DataCidWriter struct {
 	throttle chan int
 }
 
+// Write writes data to the DataCidWriter
 func (w *DataCidWriter) Write(p []byte) (int, error) {
 	if w.throttle == nil {
 		w.throttle = make(chan int, runtime.NumCPU())
-
 	}
 	for i := 0; i < cap(w.throttle); i++ {
 		w.throttle <- i
@@ -120,7 +126,8 @@ func (w *DataCidWriter) Sum() (DataCIDSize, error) {
 		pb, pps, _ := cc.Digest()
 		p, _ := commcid.PieceCommitmentV1ToCID(pb)
 
-		if abi.PaddedPieceSize(pps).Unpadded() < CommPBuf { // special case for pieces smaller than 16MiB
+		// if the last piece is less than CommPBuf, we're done
+		if abi.PaddedPieceSize(pps).Unpadded() < CommPBuf {
 			return DataCIDSize{
 				PayloadSize: w.len,
 				PieceSize:   abi.PaddedPieceSize(pps),
